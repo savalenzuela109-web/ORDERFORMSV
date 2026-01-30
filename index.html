@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sa Valenzuela Smoke House - Order Form</title>
+    <style>
+        :root { --gold: #d4af37; --black: #1a1a1a; --white: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #121212; color: var(--white); padding: 15px; line-height: 1.4; }
+        .container { max-width: 450px; background: var(--black); padding: 25px; border: 2px solid var(--gold); border-radius: 12px; margin: auto; box-shadow: 0 0 20px rgba(212, 175, 55, 0.2); }
+        h1 { color: var(--gold); text-align: center; font-family: 'Georgia', serif; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 2px; }
+        .tagline { text-align: center; color: #888; font-size: 0.85em; margin-bottom: 20px; font-style: italic; }
+        .menu-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .item-info { flex: 1; padding-right: 10px; }
+        .item-name { font-weight: bold; color: var(--gold); display: block; }
+        .item-price { font-size: 0.9em; color: #bbb; }
+        input[type="number"] { width: 50px; padding: 8px; background: #222; color: white; border: 1px solid var(--gold); border-radius: 4px; text-align: center; font-weight: bold; }
+        label { display: block; margin-top: 20px; font-weight: bold; color: var(--gold); text-transform: uppercase; font-size: 0.8em; }
+        input[type="text"], textarea { width: 100%; padding: 12px; margin-top: 5px; border-radius: 4px; border: 1px solid #444; background: #222; color: white; box-sizing: border-box; }
+        .total-box { background: #222; padding: 20px; border-radius: 8px; margin-top: 25px; border-left: 5px solid var(--gold); }
+        .grand-total-row { display: flex; justify-content: space-between; font-size: 1.4em; font-weight: bold; color: var(--gold); }
+        button { background-color: var(--gold); color: black; border: none; padding: 18px; width: 100%; border-radius: 4px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 25px; text-transform: uppercase; transition: 0.3s; }
+        button:hover { background-color: #f1c40f; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Sa Valenzuela</h1>
+    <p class="tagline">SMOKE HOUSE • LEMERY, BATANGAS</p>
+    
+    <form id="orderForm">
+        <label>Customer Name</label>
+        <input type="text" id="name" required placeholder="Full Name">
+
+        <label>Delivery Address / Landmark</label>
+        <textarea id="address" rows="2" placeholder="Brgy, Street, or Landmark in Lemery" required></textarea>
+
+        <label style="margin-top:30px; border-bottom: 1px solid var(--gold); padding-bottom: 5px;">Our Menu</label>
+        
+        <div class="menu-item">
+            <div class="item-info">
+                <span class="item-name">Smoked Quarter Chicken</span>
+                <span class="item-price">₱149.00</span>
+            </div>
+            <input type="number" class="qty" data-name="Smoked Chicken" data-price="149" value="0" min="0">
+        </div>
+
+        <div class="menu-item">
+            <div class="item-info">
+                <span class="item-name">Smoked Pork Belly</span>
+                <span class="item-price">₱149.00</span>
+            </div>
+            <input type="number" class="qty" data-name="Pork Belly" data-price="149" value="0" min="0">
+        </div>
+
+        <div class="menu-item">
+            <div class="item-info">
+                <span class="item-name">Smoked Bangus (1 Whole)</span>
+                <span class="item-price">₱129.00</span>
+            </div>
+            <input type="number" class="qty" data-name="Smoked Bangus" data-price="129" value="0" min="0">
+        </div>
+
+        <div class="menu-item">
+            <div class="item-info">
+                <span class="item-name">Pancit Mike w/ Smoked Meat</span>
+                <span class="item-price">₱159.00</span>
+            </div>
+            <input type="number" class="qty" data-name="Pancit Mike" data-price="159" value="0" min="0">
+        </div>
+
+        <div class="menu-item">
+            <div class="item-info">
+                <span class="item-name">Smoked Tokwa't Baboy</span>
+                <span class="item-price">₱119.00</span>
+            </div>
+            <input type="number" class="qty" data-name="Tokwa't Baboy" data-price="119" value="0" min="0">
+        </div>
+
+        <div class="total-box">
+            <div class="grand-total-row">
+                <span>TOTAL:</span><span id="grandTotal">₱0.00</span>
+            </div>
+        </div>
+
+        <button type="submit">Place Order via SMS</button>
+        <p style="text-align:center; font-size: 0.7em; color: #666; margin-top: 10px;">Orders come with Kapeng Barako!</p>
+    </form>
+</div>
+
+<script>
+    const inputs = document.querySelectorAll('.qty');
+    const totalDisplay = document.getElementById('grandTotal');
+
+    function updateTotal() {
+        let total = 0;
+        inputs.forEach(i => total += (parseInt(i.value) || 0) * parseInt(i.dataset.price));
+        totalDisplay.innerText = '₱' + total.toLocaleString();
+    }
+
+    inputs.forEach(i => i.addEventListener('input', updateTotal));
+
+    document.getElementById('orderForm').onsubmit = (e) => {
+        e.preventDefault();
+        
+        let items = "";
+        document.querySelectorAll('.qty').forEach(i => {
+            if(i.value > 0) items += `${i.value}x ${i.dataset.name}, `;
+        });
+        
+        if (items === "") {
+            alert("Please pick at least one delicious smoked item!");
+            return;
+        }
+
+        const name = document.getElementById('name').value;
+        const addr = document.getElementById('address').value;
+        const total = totalDisplay.innerText;
+        
+        // !!! REPLACE THIS WITH YOUR REAL NUMBER !!!
+        const myNumber = "09563106749"; 
+        
+        const message = `SA VALENZUELA ORDER:%0aName: ${name}%0aItems: ${items}%0aAddress: ${addr}%0aTotal: ${total}`;
+        
+        window.location.href = `sms:${myNumber}?body=${message}`;
+    };
+</script>
+
+</body>
+</html>
