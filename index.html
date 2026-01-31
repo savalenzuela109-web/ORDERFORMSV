@@ -10,19 +10,28 @@
         .container { max-width: 450px; background: var(--black); padding: 25px; border: 2px solid var(--gold); border-radius: 12px; margin: auto; }
         h1 { color: var(--gold); text-align: center; font-family: 'Georgia', serif; text-transform: uppercase; margin-bottom: 5px; }
         .tagline { text-align: center; color: #888; font-size: 0.8em; margin-bottom: 20px; }
+        
         .menu-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #333; padding-bottom: 8px; }
         .item-name { font-weight: bold; color: var(--gold); }
         .item-price { font-size: 0.9em; color: #bbb; display: block; }
+        
         input[type="number"], select { padding: 8px; background: #222; color: white; border: 1px solid var(--gold); border-radius: 4px; }
-        /* This makes the box look better */
         input[type="number"] { width: 60px; text-align: center; font-size: 1.1em; }
         select { width: 100%; margin-top: 5px; }
+        
         label { display: block; margin-top: 15px; font-weight: bold; color: var(--gold); text-transform: uppercase; font-size: 0.85em; }
         input[type="text"], textarea { width: 100%; padding: 12px; margin-top: 5px; border-radius: 4px; border: 1px solid #444; background: #222; color: white; box-sizing: border-box; }
+        
         .total-box { background: #222; padding: 15px; border-radius: 8px; margin-top: 25px; border-left: 5px solid var(--gold); }
         .btn-sms { background-color: var(--gold); color: black; border: none; padding: 15px; width: 100%; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; text-transform: uppercase; }
         .btn-fb { background-color: #0084ff; color: white; border: none; padding: 15px; width: 100%; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; text-transform: uppercase; }
-        .delivery-note { color: #888; font-size: 0.75em; margin-top: 5px; font-style: italic; }
+        
+        /* Popup Alert Styling */
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 999; }
+        .copy-alert { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a1a; border: 2px solid var(--gold); padding: 30px; border-radius: 15px; z-index: 1000; text-align: center; width: 85%; max-width: 320px; }
+        .copy-alert h3 { color: var(--gold); margin-top: 0; }
+        .copy-alert p { font-size: 0.95em; line-height: 1.4; color: #ddd; }
+        .btn-ok { background: var(--gold); color: black; border: none; padding: 12px 30px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 15px; width: 100%; }
     </style>
 </head>
 <body>
@@ -43,7 +52,6 @@
             <option value="Pickup">Store Pickup (₱0)</option>
             <option value="Delivery">Delivery (Fee to be discussed)</option>
         </select>
-        <p class="delivery-note">*Delivery charge will be confirmed after you send the order.</p>
 
         <label style="margin-top:25px; border-bottom: 1px solid var(--gold); display: inline-block;">Menu</label>
         
@@ -51,22 +59,18 @@
             <div><span class="item-name">Smoked Chicken</span><span class="item-price">₱149</span></div>
             <input type="number" class="qty" data-name="Smoked Chicken" data-price="149" placeholder="0" min="0">
         </div>
-
         <div class="menu-item">
             <div><span class="item-name">Smoked Pork Belly</span><span class="item-price">₱149</span></div>
             <input type="number" class="qty" data-name="Pork Belly" data-price="149" placeholder="0" min="0">
         </div>
-
         <div class="menu-item">
             <div><span class="item-name">Smoked Bangus</span><span class="item-price">₱129</span></div>
             <input type="number" class="qty" data-name="Smoked Bangus" data-price="129" placeholder="0" min="0">
         </div>
-
         <div class="menu-item">
             <div><span class="item-name">Pancit Mike</span><span class="item-price">₱159</span></div>
             <input type="number" class="qty" data-name="Pancit Mike" data-price="159" placeholder="0" min="0">
         </div>
-
         <div class="menu-item">
             <div><span class="item-name">Tokwa't Baboy</span><span class="item-price">₱119</span></div>
             <input type="number" class="qty" data-name="Tokwa't Baboy" data-price="119" placeholder="0" min="0">
@@ -74,13 +78,21 @@
 
         <div class="total-box">
             <div style="display:flex; justify-content:space-between; font-size: 1.3em; font-weight: bold;">
-                <span>Food Total:</span><span id="grandTotal">₱0.00</span>
+                <span>Food Total:</span><span id="grandTotal">₱0</span>
             </div>
         </div>
 
         <button type="button" class="btn-sms" onclick="sendOrder('sms')">Send via Text (SMS)</button>
         <button type="button" class="btn-fb" onclick="sendOrder('fb')">Send via Messenger</button>
     </form>
+</div>
+
+<div id="overlay" class="overlay"></div>
+<div id="copyAlert" class="copy-alert">
+    <h3>📋 ORDER COPIED!</h3>
+    <p>Your order details are now saved to your clipboard.</p>
+    <p><strong>Step 2:</strong> Once Messenger opens, just <strong>PASTE</strong> the message and hit send!</p>
+    <button class="btn-ok" onclick="proceedToMessenger()">OK, OPEN MESSENGER</button>
 </div>
 
 <script>
@@ -108,25 +120,38 @@
         });
 
         if (!items) { alert("Please select an item first!"); return; }
+        if (!document.getElementById('name').value) { alert("Please enter your name!"); return; }
 
         const name = document.getElementById('name').value;
         const addr = document.getElementById('address').value;
         const delMethod = document.getElementById('deliveryOption').value;
         const total = totalDisplay.innerText;
         
-        // !!! UPDATE YOUR INFO HERE !!!
         const myNumber = "09563106749"; 
-        const fbName = "SaValenzuelaSmokeHouse"; 
-
-        const message = `ORDER FOR SA VALENZUELA:%0aName: ${name}%0aMethod: ${delMethod}%0aItems: ${items}%0aAddress: ${addr}%0aFood Total: ${total}%0a(Wait for delivery fee confirmation)`;
+        
+        // Formatted message for the user
+        const message = `ORDER FOR SA VALENZUELA:\nName: ${name}\nMethod: ${delMethod}\nItems: ${items}\nAddress: ${addr}\nFood Total: ${total}\n(Wait for confirmation)`;
 
         if (method === 'sms') {
-            window.location.href = `sms:${myNumber}?body=${message}`;
+            const smsMessage = encodeURIComponent(message);
+            window.location.href = `sms:${myNumber}?body=${smsMessage}`;
         } else {
-            alert("Details Copied! Open Messenger and Paste.");
-            navigator.clipboard.writeText(message.replace(/%0a/g, '\n'));
-            window.open(`https://m.me/${fbName}`, '_blank');
+            // Copy to clipboard first
+            navigator.clipboard.writeText(message).then(() => {
+                // Show the instruction popup
+                document.getElementById('overlay').style.display = 'block';
+                document.getElementById('copyAlert').style.display = 'block';
+            }).catch(err => {
+                alert("Could not copy automatically. Please take a screenshot of your order!");
+            });
         }
+    }
+
+    function proceedToMessenger() {
+        const fbName = "SaValenzuelaSmokeHouse"; 
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('copyAlert').style.display = 'none';
+        window.open(`https://m.me/${fbName}`, '_blank');
     }
 </script>
 </body>
